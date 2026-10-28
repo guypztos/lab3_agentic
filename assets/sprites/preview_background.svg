@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+  <!-- Stand-in for the game's background, drawn in the same flat style -->
+  <rect width="960" height="540" fill="#8ecdf0"/>
+  <rect y="300" width="960" height="140" fill="#a6daf3"/>
+  <circle cx="800" cy="105" r="58" fill="#ffc22e"/>
+  <circle cx="794" cy="99" r="52" fill="#ffd84d"/>
+  <path d="M-20 440 L150 210 Q165 192 180 210 L330 400 L470 180 Q485 160 500 180 L700 440 Z" fill="#9fb0c3"/>
+  <path d="M-20 440 L150 210 Q160 198 168 210 L300 400 L470 180 Q480 168 488 182 L640 440 Z" fill="#b9c8d8"/>
+  <path d="M560 440 L760 230 Q775 214 790 230 L1000 440 Z" fill="#9fb0c3"/>
+  <path d="M560 440 L760 230 Q770 220 778 232 L940 440 Z" fill="#b9c8d8"/>
+  <g>
+    <rect x="76" y="380" width="12" height="60" rx="4" fill="#8a5a3b"/>
+    <circle cx="82" cy="365" r="36" fill="#3f9a45"/><circle cx="78" cy="360" r="31" fill="#5cb85c"/>
+    <rect x="886" y="384" width="12" height="56" rx="4" fill="#8a5a3b"/>
+    <circle cx="892" cy="370" r="32" fill="#3f9a45"/><circle cx="888" cy="366" r="27" fill="#5cb85c"/>
+    <rect x="596" y="400" width="8" height="40" rx="3" fill="#7a4e33"/>
+    <path d="M600 330 L628 405 Q600 412 572 405 Z" fill="#23744a"/><path d="M600 330 L620 404 Q596 410 572 405 Z" fill="#2f8f5b"/>
+    <rect x="646" y="396" width="8" height="44" rx="3" fill="#7a4e33"/>
+    <path d="M650 316 L682 400 Q650 408 618 400 Z" fill="#23744a"/><path d="M650 316 L672 400 Q644 406 618 400 Z" fill="#2f8f5b"/>
+    <rect x="236" y="404" width="8" height="36" rx="3" fill="#7a4e33"/>
+    <path d="M240 340 L266 410 Q240 416 214 410 Z" fill="#23744a"/><path d="M240 340 L258 409 Q236 414 214 410 Z" fill="#2f8f5b"/>
+  </g>
+  <rect y="430" width="960" height="110" fill="#5fb544"/>
+  <path d="M0 438 Q120 426 240 436 T480 434 T720 436 T960 432 L960 540 L0 540 Z" fill="#7ccf5a"/>
+</svg>

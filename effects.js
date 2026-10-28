@@ -6,7 +6,7 @@ window.CoinDashFX = {
     CoinDashAudio.init(scene.sound.context);
     CoinDashAudio.startMusic();
   },
-  onCoin(scene, x, y) { CoinDashAudio.coin(scene.score); },
+  onCoin(scene, x, y) { CoinDashAudio.coin(scene.collected); },
   onHit(scene) { CoinDashAudio.crash(); },
   onFinish(scene, reason) {}
 };

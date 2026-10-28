@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sprite Preview</title>
+<style>
+  body { margin: 0; background: #0a1120; color: #e5edf7; font: 15px/1.4 system-ui, sans-serif; }
+  main { max-width: 960px; margin: 0 auto; }
+  .scene { position: relative; width: 960px; height: 540px; background: url(preview_background.svg); }
+  .scene img { position: absolute; }
+  .scene .tag { position: absolute; font: bold 13px system-ui; color: #fff; background: #0006;
+    padding: 1px 7px; border-radius: 8px; transform: translateX(-50%); }
+  .row { display: flex; gap: 18px; align-items: end; padding: 14px 18px; background: #7ccf5a; }
+  .row img { width: 32px; height: 32px; }
+  .row span { color: #12301a; font-weight: 600; margin-right: 8px; }
+</style>
+</head>
+<body><main>
+  <div class="scene">
+    <img src="player_idle.png"  style="left:120px; top:312px">
+    <img src="player_walk.png"  style="left:290px; top:313px">
+    <img src="player_jump.png"  style="left:420px; top:190px">
+    <img src="enemy_walk.png"   style="left:690px; top:312px">
+    <img src="enemy_hit.png"    style="left:810px; top:316px">
+    <img src="food_apple.png"   style="left:250px; top:205px"><span class="tag" style="left:282px; top:185px">10</span>
+    <img src="food_banana.png"  style="left:340px; top:150px"><span class="tag" style="left:372px; top:130px">20</span>
+    <img src="food_cake.png"    style="left:560px; top:170px"><span class="tag" style="left:592px; top:150px">50</span>
+    <img src="food_golden_star.png" style="left:650px; top:110px"><span class="tag" style="left:682px; top:90px">100</span>
+  </div>
+  <div class="row"><span>At 32px:</span>
+    <img src="player_idle.png"><img src="player_walk.png"><img src="player_jump.png">
+    <img src="enemy_walk.png"><img src="enemy_hit.png">
+    <img src="food_apple.png"><img src="food_banana.png"><img src="food_cake.png"><img src="food_golden_star.png">
+  </div>
+</main></body>
+</html>
