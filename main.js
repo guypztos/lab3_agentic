@@ -4,7 +4,8 @@ window.coinDashGame = new Phaser.Game({
   parent: 'game',
   width: COIN_DASH.width,
   height: COIN_DASH.height,
-  backgroundColor: COIN_DASH.colors.background,
+  // Transparent so the background image set in style.css shows through.
+  transparent: true,
   physics: { default: 'arcade', arcade: { debug: false } },
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_HORIZONTALLY },
   scene: CoinDash

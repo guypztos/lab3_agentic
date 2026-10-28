@@ -35,7 +35,8 @@ laptops' JSON files together and save the combined HTML. Use the same time windo
 - `.agents/skills/lab-report`: link to the same skill for Codex.
 - `.gitignore`: keeps generated reports out of Git.
 - `index.html`: page and script loading.
-- `style.css`: page appearance.
+- `style.css`: page appearance, including the game's background image.
+- `back_img.webp`: background landscape shown behind the game.
 - `settings.js`: round duration, speeds, colours and dimensions.
 - `game.js`: scene, input, collisions, score and end-of-round (gameplay).
 - `main.js`: Phaser game bootstrap.
@@ -45,6 +46,6 @@ laptops' JSON files together and save the combined HTML. Use the same time windo
 - `vendor/phaser-3.90.0.min.js`: the pinned Phaser runtime, byte for byte the file published at
   `https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js`; `vendor/LICENSE.phaser.txt` is its MIT licence.
 
-The game draws its own shapes; there are no image or audio assets, and `audio.js` generates every sound at runtime. The authored files are under the
+The game draws its own shapes over one background image; there are no audio assets, and `audio.js` generates every sound at runtime. The authored files are under the
 MIT licence in LICENSE.txt. Phaser documentation:
 https://docs.phaser.io/phaser/getting-started/making-your-first-phaser-game
