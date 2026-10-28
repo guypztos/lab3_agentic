@@ -71,6 +71,8 @@ class CoinDash extends Phaser.Scene {
     this.input.keyboard.on('keydown-R', () => this.scene.restart());
     this.input.keyboard.on('keydown-P', () => this.togglePause());
     this.input.keyboard.on('keydown-ESC', () => this.togglePause());
+    // From the pause or end screen, M goes back to the main menu to switch between 1 and 2 players.
+    this.input.keyboard.on('keydown-M', () => { if (this.paused || this.finished) this.scene.start('MainMenu'); });
   }
 
   addScore(player, amount) {
@@ -169,7 +171,7 @@ class CoinDash extends Phaser.Scene {
     this.time.paused = true;  // freezes spawn timers and drone respawns
     this.pauseOverlay = [
       this.add.rectangle(c.width / 2, c.height / 2, c.width, c.height, 0x0a1120, 0.7).setDepth(10),
-      this.add.text(c.width / 2, c.height / 2, 'PAUSED\nPress P or Esc to resume',
+      this.add.text(c.width / 2, c.height / 2, 'PAUSED\nPress P or Esc to resume\nPress M for the main menu',
         { font: '24px monospace', color: '#ffffff', align: 'center', lineSpacing: 12 }).setOrigin(0.5).setDepth(10)
     ];
     CoinDashFX.onPause?.(this, true);
@@ -357,16 +359,16 @@ class CoinDash extends Phaser.Scene {
     let summary, height;
     if (this.playerCount === 1) {
       summary = `${this.score} coins collected`;
-      height = 150;
+      height = 186;
     } else {
       const [p1, p2] = this.players;
       const result = p1.score === p2.score ? "It's a tie!"
         : `${(p1.score > p2.score ? p1 : p2).name} wins!`;
       summary = `${p1.name}: ${p1.score}   ${p2.name}: ${p2.score}\n${result}`;
-      height = 190;
+      height = 226;
     }
     this.add.rectangle(c.width / 2, c.height / 2, 460, height, 0x0a1120, 0.95);
-    this.add.text(c.width / 2, c.height / 2, `${reason}\n${summary}\nPress R to try again`,
+    this.add.text(c.width / 2, c.height / 2, `${reason}\n${summary}\nPress R to try again\nPress M for the main menu`,
       { font: '24px monospace', color: '#ffffff', align: 'center', lineSpacing: 12 }
     ).setOrigin(0.5);
   }
