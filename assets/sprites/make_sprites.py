@@ -9,9 +9,11 @@ def svg(size, body, defs=''):
 # ---------- Player: round orange critter ----------
 P = dict(main='#f28c28', shade='#d46a14', belly='#ffe3bd', ear='#ffb37a',
          foot='#b85410', arm='#e27a1c', cheek='#ff8a78', ink='#3a2a36')
+# Player 2: the same character in red, so two players are easy to tell apart.
+P2 = dict(main='#e84f5c', shade='#c43846', belly='#ffe1dc', ear='#ff9ea6',
+          foot='#a02a37', arm='#d64250', cheek='#ffb3a3', ink='#3a2a36')
 
-def player(state):
-    p = P
+def player(state, p=P):
     if state == 'idle':
         body_t, feet, arms, mouth = '', [(50, 110), (78, 110)], [(27, 82, 20), (101, 82, -20)], 'smile'
     elif state == 'walk':
@@ -168,6 +170,7 @@ def golden_star():
 
 files = {
     'player_idle': player('idle'), 'player_walk': player('walk'), 'player_jump': player('jump'),
+    'player2_idle': player('idle', P2), 'player2_walk': player('walk', P2), 'player2_jump': player('jump', P2),
     'enemy_walk': enemy('walk'), 'enemy_hit': enemy('hit'),
     'food_apple': apple(), 'food_banana': banana(), 'food_cake': cake(), 'food_golden_star': golden_star(),
 }

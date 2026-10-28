@@ -8,6 +8,7 @@ import base64, pathlib
 
 HERE = pathlib.Path(__file__).parent
 NAMES = ['player_idle', 'player_walk', 'player_jump',
+         'player2_idle', 'player2_walk', 'player2_jump',
          'enemy_walk', 'enemy_hit',
          'food_apple', 'food_banana', 'food_cake', 'food_golden_star']
 
