@@ -29,9 +29,14 @@ class CoinDash extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.coin, () => {
       if (this.finished) return;
       this.score++;
+      CoinDashFX.onCoin(this, this.coin.x, this.coin.y);
       this.placeCoin();
     });
-    this.physics.add.overlap(this.player, this.drones, () => this.finish('A drone caught you!'));
+    this.physics.add.overlap(this.player, this.drones, () => {
+      CoinDashFX.onHit(this);
+      this.finish('A drone caught you!');
+    });
+    CoinDashFX.onStart(this);
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys('W,A,S,D,R');
     this.input.keyboard.on('keydown-R', () => this.scene.restart());
@@ -66,6 +71,7 @@ class CoinDash extends Phaser.Scene {
     if (this.finished) return;
     this.finished = true;
     this.physics.pause();
+    CoinDashFX.onFinish(this, reason);
     const c = COIN_DASH;
     this.add.rectangle(c.width / 2, c.height / 2, 460, 150, 0x0a1120, 0.95);
     this.add.text(c.width / 2, c.height / 2,
@@ -74,13 +80,3 @@ class CoinDash extends Phaser.Scene {
     ).setOrigin(0.5);
   }
 }
-window.coinDashGame = new Phaser.Game({
-  type: Phaser.AUTO,
-  parent: 'game',
-  width: COIN_DASH.width,
-  height: COIN_DASH.height,
-  backgroundColor: COIN_DASH.colors.background,
-  physics: { default: 'arcade', arcade: { debug: false } },
-  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_HORIZONTALLY },
-  scene: CoinDash
-});

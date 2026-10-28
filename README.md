@@ -37,7 +37,10 @@ laptops' JSON files together and save the combined HTML. Use the same time windo
 - `index.html`: page and script loading.
 - `style.css`: page appearance.
 - `settings.js`: round duration, speeds, colours and dimensions.
-- `game.js`: scene, input, collisions, score and end-of-round behaviour.
+- `game.js`: scene, input, collisions, score and end-of-round (gameplay).
+- `main.js`: Phaser game bootstrap.
+- `effects.js`: sound/particle/shake hooks called by game.js (polish).
+- `storage.js`: high score persistence (polish).
 - `vendor/phaser-3.90.0.min.js`: the pinned Phaser runtime, byte for byte the file published at
   `https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js`; `vendor/LICENSE.phaser.txt` is its MIT licence.
 
