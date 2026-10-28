@@ -10,6 +10,8 @@ class CoinDash extends Phaser.Scene {
     this.invulnerableUntil = 0;
     this.effects = { shield: 0, speed: 0, magnet: 0, predator: 0 };  // expiry time per effect
     this.outline = null;
+    this.paused = false;
+    this.time.paused = false;
     this.deadline = this.time.now + c.roundSeconds * 1000;
     this.physics.world.setBounds(0, 44, c.width, c.height - 44);
     this.add.grid(c.width / 2, c.height / 2, c.width, c.height, 40, 40,
@@ -45,9 +47,44 @@ class CoinDash extends Phaser.Scene {
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys('W,A,S,D,R');
     this.input.keyboard.on('keydown-R', () => this.scene.restart());
+    this.input.keyboard.on('keydown-P', () => this.togglePause());
+    this.input.keyboard.on('keydown-ESC', () => this.togglePause());
   }
 
   isInvulnerable() { return this.time.now < this.invulnerableUntil; }
+
+  togglePause() {
+    if (this.finished) return;
+    if (this.paused) this.resume(); else this.pause();
+  }
+
+  pause() {
+    const c = COIN_DASH;
+    this.paused = true;
+    this.pausedAt = this.time.now;
+    this.physics.pause();
+    this.time.paused = true;  // freezes spawn timers and drone respawns
+    this.pauseOverlay = [
+      this.add.rectangle(c.width / 2, c.height / 2, c.width, c.height, 0x0a1120, 0.7).setDepth(10),
+      this.add.text(c.width / 2, c.height / 2, 'PAUSED\nPress P or Esc to resume',
+        { font: '24px monospace', color: '#ffffff', align: 'center', lineSpacing: 12 }).setOrigin(0.5).setDepth(10)
+    ];
+    CoinDashFX.onPause?.(this, true);
+  }
+
+  resume() {
+    // The scene clock may keep running while paused, so push every deadline back by the pause length.
+    const gap = Math.max(0, this.time.now - this.pausedAt);
+    this.deadline += gap;
+    if (this.invulnerableUntil) this.invulnerableUntil += gap;
+    Object.keys(this.effects).forEach(t => { if (this.effects[t]) this.effects[t] += gap; });
+    this.pickups.getChildren().forEach(pickup => { pickup.expires += gap; });
+    this.paused = false;
+    this.time.paused = false;
+    this.physics.resume();
+    this.pauseOverlay.forEach(o => o.destroy());
+    CoinDashFX.onPause?.(this, false);
+  }
 
   isActive(type) { return this.effects[type] > this.time.now; }
 
@@ -175,7 +212,7 @@ class CoinDash extends Phaser.Scene {
   }
 
   update() {
-    if (this.finished) return;
+    if (this.finished || this.paused) return;
     const dx = Number(this.cursors.right.isDown || this.keys.D.isDown)
       - Number(this.cursors.left.isDown || this.keys.A.isDown);
     const dy = Number(this.cursors.down.isDown || this.keys.S.isDown)
