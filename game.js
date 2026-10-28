@@ -1,4 +1,4 @@
-/* global Phaser, COIN_DASH, COIN_DASH_SPRITES, CoinDashFX */
+/* global Phaser, COIN_DASH, COIN_DASH_SPRITES, CoinDashFX, CoinDashStorage */
 class CoinDash extends Phaser.Scene {
   constructor() { super('CoinDash'); }
 
@@ -13,6 +13,8 @@ class CoinDash extends Phaser.Scene {
     this.score = 0;
     this.collected = 0;
     this.finished = false;
+    this.enteringName = false;
+    this.best = CoinDashStorage.getBest();
     this.deadline = this.time.now + c.roundSeconds * 1000;
     this.physics.world.setBounds(0, 44, c.width, c.height - 44);
     this.hud = this.add.text(18, 12, '', {
@@ -59,7 +61,9 @@ class CoinDash extends Phaser.Scene {
     CoinDashFX.onStart(this);
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys('W,A,S,D,R');
-    this.input.keyboard.on('keydown-R', () => this.scene.restart());
+    // R and Esc are ignored while typing initials, where R is just a letter.
+    this.input.keyboard.on('keydown-R', () => { if (!this.enteringName) this.scene.restart(); });
+    this.input.keyboard.on('keydown-ESC', () => { if (!this.enteringName) this.scene.start('MainMenu'); });
   }
 
   placeCoin() {
@@ -89,7 +93,8 @@ class CoinDash extends Phaser.Scene {
     this.animatePlayer(dx);
     for (const drone of this.drones.getChildren()) drone.setFlipX(drone.body.velocity.x < 0);
     const seconds = Math.max(0, Math.ceil((this.deadline - this.time.now) / 1000));
-    this.hud.setText(`Score: ${this.score}                       Time: ${seconds}s`);
+    this.hud.setText(`Score: ${this.score}     Best: ${Math.max(this.best, this.score)}`
+      + `            Time: ${seconds}s`);
     if (seconds === 0) this.finish('Time is up!');
   }
 
@@ -112,10 +117,35 @@ class CoinDash extends Phaser.Scene {
     this.physics.pause();
     CoinDashFX.onFinish(this, reason);
     const c = COIN_DASH;
-    this.add.rectangle(c.width / 2, c.height / 2, 460, 150, 0x0a1120, 0.95);
-    this.add.text(c.width / 2, c.height / 2,
-      `${reason}\n${this.score} points (${this.collected} snacks)\nPress R to try again`,
+    this.add.rectangle(c.width / 2, c.height / 2, 520, 200, 0x0a1120, 0.95);
+    this.endText = this.add.text(c.width / 2, c.height / 2, '',
       { font: '24px monospace', color: '#ffffff', align: 'center', lineSpacing: 12 }
     ).setOrigin(0.5);
+    const summary = `${reason}\n${this.score} points (${this.collected} snacks)`;
+    if (CoinDashStorage.qualifies(this.score)) this.askInitials(reason);
+    else this.endText.setText(`${summary}\nR: try again · Esc: menu`);
+  }
+
+  // Arcade-style entry: up to three letters, Backspace to fix, Enter to save.
+  askInitials(reason) {
+    this.enteringName = true;
+    let initials = '';
+    const render = () => this.endText.setText(`${reason}\nNew high score: ${this.score}!`
+      + `\nYour initials: ${initials.padEnd(3, '_')}\nType A-Z, Enter to save`);
+    render();
+    const onKey = (event) => {
+      // A WASD key still held from playing would otherwise auto-repeat into the initials.
+      if (event.repeat) return;
+      if (/^[a-z]$/i.test(event.key) && initials.length < 3) initials += event.key.toUpperCase();
+      else if (event.key === 'Backspace') initials = initials.slice(0, -1);
+      else if (event.key === 'Enter' && initials.length) {
+        this.input.keyboard.off('keydown', onKey);
+        const rank = CoinDashStorage.addScore(initials, this.score);
+        this.scene.start('HighScores', { highlight: rank });
+        return;
+      }
+      render();
+    };
+    this.input.keyboard.on('keydown', onKey);
   }
 }

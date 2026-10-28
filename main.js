@@ -1,4 +1,4 @@
-/* global Phaser, COIN_DASH, MainMenu, CoinDash */
+/* global Phaser, COIN_DASH, MainMenu, CoinDash, HighScores */
 window.coinDashGame = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',
@@ -9,5 +9,5 @@ window.coinDashGame = new Phaser.Game({
   physics: { default: 'arcade', arcade: { debug: false } },
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_HORIZONTALLY },
   // The first scene listed starts automatically.
-  scene: [MainMenu, CoinDash]
+  scene: [MainMenu, CoinDash, HighScores]
 });
