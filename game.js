@@ -14,10 +14,10 @@ class CoinDash extends Phaser.Scene {
     this.time.paused = false;
     this.deadline = this.time.now + c.roundSeconds * 1000;
     this.physics.world.setBounds(0, 44, c.width, c.height - 44);
-    this.add.grid(c.width / 2, c.height / 2, c.width, c.height, 40, 40,
-      c.colors.background, 1, 0x24334b, 0.45);
-    this.hud = this.add.text(18, 12, '', { font: '18px monospace', color: '#ffffff' });
-    this.effectsHud = this.add.text(c.width - 18, 15, '', { font: '14px monospace', color: '#ffffff' }).setOrigin(1, 0);
+    this.hud = this.add.text(18, 12, '', {
+      font: '18px monospace', color: '#ffffff', stroke: '#0a1120', strokeThickness: 4 });
+    this.effectsHud = this.add.text(c.width - 18, 15, '', {
+      font: '14px monospace', color: '#ffffff', stroke: '#0a1120', strokeThickness: 3 }).setOrigin(1, 0);
     this.player = this.add.rectangle(c.width / 2, c.height / 2, 24, 24, c.colors.player);
     this.physics.add.existing(this.player);
     this.player.body.setCollideWorldBounds(true);
