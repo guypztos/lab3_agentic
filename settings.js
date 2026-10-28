@@ -20,7 +20,7 @@ window.COIN_DASH = {
     speedMultiplier: 1.6,
     magnetRange: 240,        // coins within this distance get pulled in
     magnetPull: 280,
-    eatBonus: 5,             // coins gained per drone eaten
+    eatBonus: 50,            // points gained per drone eaten
     eatRespawnMs: 5000,      // an eaten drone is gone this long
     colors: { shield: 0x4dabff, speed: 0xffa94d, magnet: 0xc77dff, predator: 0xff4fd8 },
     labels: { shield: 'S', speed: '>', magnet: 'M', predator: 'E' }
@@ -38,7 +38,17 @@ window.COIN_DASH = {
   },
   players: [
     { name: 'P1 (Arrows)', color: 0x71e8ce, css: '#71e8ce' },
-    { name: 'P2 (WASD)', color: 0x7aa2ff, css: '#7aa2ff' }
+    { name: 'P2 (WASD)', color: 0x7aa2ff, css: '#7aa2ff', tint: 0x7aa2ff }  // tint recolours the sprite
+  ],
+  playerSize: 48,
+  foodSize: 34,
+  enemySize: 46,
+  // Collectibles: points per pickup and how often each one spawns (relative weight).
+  foods: [
+    { key: 'food_apple', points: 10, weight: 60 },
+    { key: 'food_banana', points: 20, weight: 25 },
+    { key: 'food_cake', points: 50, weight: 11 },
+    { key: 'food_golden_star', points: 100, weight: 4 },
   ],
 
   // --- polish tuning: polish owner adds keys below ---

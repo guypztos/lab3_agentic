@@ -1,13 +1,20 @@
-/* global Phaser, COIN_DASH, CoinDashFX */
+/* global Phaser, COIN_DASH, COIN_DASH_SPRITES, CoinDashFX */
 class CoinDash extends Phaser.Scene {
   constructor() { super('CoinDash'); }
 
   // The main menu starts this scene with { players: 1 or 2 }; restarting with R keeps the same data.
   init(data) { this.playerCount = data && data.players === 2 ? 2 : 1; }
 
+  preload() {
+    for (const [key, url] of Object.entries(COIN_DASH_SPRITES)) {
+      if (!this.textures.exists(key)) this.load.image(key, url);
+    }
+  }
+
   create() {
     const c = COIN_DASH;
-    this.score = 0;  // team total across players; the coin sound uses it to rise in pitch
+    this.score = 0;      // team total points across players
+    this.collected = 0;  // snacks collected by everyone; the coin sound rises in pitch with it
     this.finished = false;
     this.paused = false;
     this.time.paused = false;
@@ -23,18 +30,25 @@ class CoinDash extends Phaser.Scene {
     const wasd = kb.addKeys('W,A,S,D');
     const arrowKeys = { up: arrows.up, down: arrows.down, left: arrows.left, right: arrows.right };
     const wasdKeys = { up: wasd.W, down: wasd.S, left: wasd.A, right: wasd.D };
+    if (!this.anims.exists('player-walk')) {
+      this.anims.create({ key: 'player-walk', frameRate: 7, repeat: -1,
+        frames: [{ key: 'player_walk' }, { key: 'player_idle' }] });
+    }
     this.players = c.players.slice(0, this.playerCount).map((cfg, i) => {
       const x = this.playerCount === 1 ? c.width / 2 : c.width / 2 + (i ? 60 : -60);
-      const sprite = this.add.rectangle(x, c.height / 2, 24, 24, cfg.color);
-      this.physics.add.existing(sprite);
-      sprite.body.setCollideWorldBounds(true);
+      const sprite = this.physics.add.sprite(x, c.height / 2, 'player_idle').setDisplaySize(c.playerSize, c.playerSize);
+      // Hitbox is the round body in the 128px frame, not the whole square image.
+      sprite.body.setCircle(34, 30, 38).setCollideWorldBounds(true);
+      if (cfg.tint) sprite.setTint(cfg.tint);
+      // Sprites cannot be outlined, so active power-ups are shown by a ring that follows the player.
+      const ring = this.add.circle(x, c.height / 2, c.playerSize / 2 + 4).setVisible(false);
       const right = i === 1;
       const hud = this.add.text(right ? c.width - 18 : 18, 12, '', textStyle({ font: '18px monospace', color: cfg.css }))
         .setOrigin(right ? 1 : 0, 0);
       const effectsHud = this.add.text(right ? c.width - 18 : 18, 31, '',
         textStyle({ font: '12px monospace', color: cfg.css, strokeThickness: 3 })).setOrigin(right ? 1 : 0, 0);
       return {
-        name: cfg.name, sprite, hud, effectsHud, score: 0, lives: c.lives, alive: true,
+        name: cfg.name, sprite, ring, hud, effectsHud, score: 0, jumpUntil: 0, lives: c.lives, alive: true,
         // A single player can use either control scheme; with two, P1 takes arrows and P2 takes WASD.
         keys: this.playerCount === 1 ? [arrowKeys, wasdKeys] : [i === 0 ? arrowKeys : wasdKeys],
         invulnerableUntil: 0, outline: null,
@@ -42,9 +56,11 @@ class CoinDash extends Phaser.Scene {
       };
     });
 
-    this.coin = this.add.circle(100, 100, 9, c.colors.coin);
-    this.physics.add.existing(this.coin);
-    this.coin.body.setCircle(9);
+    this.coin = this.physics.add.sprite(100, 100, 'food_apple').setDisplaySize(c.foodSize, c.foodSize);
+    this.coin.body.setCircle(24, 8, 8);
+    // Pulse size rather than bob position, so the tween never fights placeCoin().
+    this.tweens.add({ targets: this.coin, scale: this.coin.scale * 1.12,
+      duration: 500, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
     this.placeCoin();
     this.drones = this.physics.add.group();
     for (let i = 0; i < c.droneCount; i++) {
@@ -55,8 +71,7 @@ class CoinDash extends Phaser.Scene {
     this.players.forEach(p => {
       this.physics.add.overlap(p.sprite, this.coin, () => {
         if (this.finished || !p.alive) return;
-        this.addScore(p, 1);
-        CoinDashFX.onCoin(this, this.coin.x, this.coin.y);
+        this.collectFood(p, this.coinFood, this.coin.x, this.coin.y);
         this.placeCoin();
       });
       this.physics.add.overlap(p.sprite, this.extraCoins, (sprite, coin) => this.collectExtraCoin(p, coin));
@@ -78,6 +93,20 @@ class CoinDash extends Phaser.Scene {
   addScore(player, amount) {
     player.score += amount;
     this.score += amount;
+  }
+
+  // Rarer food is worth more: pick by weight.
+  pickFood() {
+    const foods = COIN_DASH.foods;
+    let roll = Math.random() * foods.reduce((sum, f) => sum + f.weight, 0);
+    return foods.find(f => (roll -= f.weight) < 0) || foods[0];
+  }
+
+  collectFood(player, food, x, y) {
+    this.addScore(player, food.points);
+    this.collected++;
+    player.jumpUntil = this.time.now + 300;
+    CoinDashFX.onCoin(this, x, y);
   }
 
   secondsLeft() { return Math.max(0, Math.ceil((this.deadline - this.time.now) / 1000)); }
@@ -108,9 +137,9 @@ class CoinDash extends Phaser.Scene {
 
   addDrone(x, y, angle, warningMs) {
     const c = COIN_DASH;
-    const drone = this.add.rectangle(x, y, 26, 26, c.colors.drone);
-    this.drones.add(drone);
-    drone.body.setCollideWorldBounds(true).setBounce(1, 1);
+    const drone = this.drones.create(x, y, 'enemy_walk').setDisplaySize(c.enemySize, c.enemySize);
+    // Hitbox is the round body in the 128px frame; horns and feet don't count.
+    drone.body.setCircle(34, 30, 43).setCollideWorldBounds(true).setBounce(1, 1);
     const launch = () => drone.body.setVelocity(Math.cos(angle) * c.droneSpeed, Math.sin(angle) * c.droneSpeed);
     if (!warningMs) return launch();
     // Spawn as a see-through ghost that cannot hurt anyone, then go live.
@@ -142,9 +171,10 @@ class CoinDash extends Phaser.Scene {
       if (this.finished) return;
       if (this.extraCoins.countActive() < e.maxExtraCoins) {
         const { x, y } = this.randomSpotAwayFromPlayers(60);
-        const coin = this.add.circle(x, y, 9, COIN_DASH.colors.coin);
-        this.extraCoins.add(coin);
-        coin.body.setCircle(9);
+        const food = this.pickFood();
+        const coin = this.extraCoins.create(x, y, food.key).setDisplaySize(COIN_DASH.foodSize, COIN_DASH.foodSize);
+        coin.body.setCircle(24, 8, 8);
+        coin.food = food;
         coin.expires = this.time.now + e.coinLifetimeMs;
       }
       this.scheduleCoinSpawn();
@@ -153,8 +183,7 @@ class CoinDash extends Phaser.Scene {
 
   collectExtraCoin(player, coin) {
     if (this.finished || !player.alive || !coin.active) return;
-    this.addScore(player, 1);
-    CoinDashFX.onCoin(this, coin.x, coin.y);
+    this.collectFood(player, coin.food, coin.x, coin.y);
     coin.destroy();
   }
 
@@ -205,6 +234,8 @@ class CoinDash extends Phaser.Scene {
       return;
     }
     player.lives--;
+    drone.setTexture('enemy_hit');
+    this.time.delayedCall(400, () => { if (!this.finished) drone.setTexture('enemy_walk'); });
     CoinDashFX.onHit(this);
     if (player.lives <= 0) return this.knockOut(player);
     player.invulnerableUntil = this.time.now + COIN_DASH.invulnerableMs;
@@ -214,7 +245,8 @@ class CoinDash extends Phaser.Scene {
     player.alive = false;
     player.sprite.body.setVelocity(0, 0);
     player.sprite.body.enable = false;
-    player.sprite.setAlpha(0.25).setStrokeStyle();
+    player.sprite.setAlpha(0.25);
+    player.ring.setVisible(false);
     player.effectsHud.setText('');
     if (this.players.every(q => !q.alive)) {
       this.finish(this.playerCount > 1 ? 'Both players were caught!' : 'A drone caught you!');
@@ -308,8 +340,10 @@ class CoinDash extends Phaser.Scene {
       const colour = names.length ? p.colors[names[0]] : null;
       if (colour !== q.outline) {
         q.outline = colour;
-        if (colour === null) q.sprite.setStrokeStyle(); else q.sprite.setStrokeStyle(3, colour);
+        q.ring.setVisible(colour !== null);
+        if (colour !== null) q.ring.setStrokeStyle(3, colour);
       }
+      q.ring.setPosition(q.sprite.x, q.sprite.y);
       q.effectsHud.setText(names.map(t => `${t.toUpperCase()} ${Math.ceil((q.effects[t] - now) / 1000)}s`).join('  '));
     });
   }
@@ -318,7 +352,7 @@ class CoinDash extends Phaser.Scene {
     this.timerText.setText(`Time: ${seconds}s`);
     this.players.forEach(p => {
       const hearts = '♥'.repeat(p.lives) + '♡'.repeat(COIN_DASH.lives - p.lives);
-      const label = this.playerCount === 1 ? 'Coins' : p.name;
+      const label = this.playerCount === 1 ? 'Score' : p.name;
       p.hud.setText(`${label}: ${p.score}  ${hearts}${p.alive ? '' : ' (out)'}`);
     });
   }
@@ -326,6 +360,8 @@ class CoinDash extends Phaser.Scene {
   placeCoin() {
     // Avoid spawning the next coin directly underneath a player.
     const { x, y } = this.randomSpotAwayFromPlayers(60);
+    this.coinFood = this.pickFood();
+    this.coin.setTexture(this.coinFood.key).setDisplaySize(COIN_DASH.foodSize, COIN_DASH.foodSize);
     this.coin.setPosition(x, y);
     this.coin.body.reset(x, y);
   }
@@ -342,11 +378,26 @@ class CoinDash extends Phaser.Scene {
       const speed = COIN_DASH.playerSpeed * (this.isActive(p, 'speed') ? COIN_DASH.powerUps.speedMultiplier : 1);
       const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(speed);
       p.sprite.body.setVelocity(direction.x, direction.y);
+      this.animatePlayer(p, dx);
       // Blink while invulnerable so the player can see the grace period.
       p.sprite.setAlpha(this.isInvulnerable(p) && Math.floor(this.time.now / 100) % 2 ? 0.3 : 1);
     });
+    for (const drone of this.drones.getChildren()) drone.setFlipX(drone.body.velocity.x < 0);
     this.drawHud(seconds);
     if (seconds === 0) this.finish('Time is up!');
+  }
+
+  animatePlayer(p, dx) {
+    if (dx) p.sprite.setFlipX(dx < 0);
+    if (this.time.now < p.jumpUntil) {
+      p.sprite.anims.stop();
+      p.sprite.setTexture('player_jump');
+    } else if (p.sprite.body.velocity.lengthSq() > 0) {
+      p.sprite.anims.play('player-walk', true);
+    } else {
+      p.sprite.anims.stop();
+      p.sprite.setTexture('player_idle');
+    }
   }
 
   finish(reason) {
@@ -358,7 +409,7 @@ class CoinDash extends Phaser.Scene {
     const c = COIN_DASH;
     let summary, height;
     if (this.playerCount === 1) {
-      summary = `${this.score} coins collected`;
+      summary = `${this.score} points (${this.collected} snacks)`;
       height = 186;
     } else {
       const [p1, p2] = this.players;
