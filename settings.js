@@ -9,7 +9,7 @@ window.COIN_DASH = {
   colors: { background: 0x101c31, player: 0x71e8ce, coin: 0xffd166, drone: 0xff657a },
 
   // --- gameplay tuning: gameplay owner adds keys below ---
-  lives: 3,
+  lives: 2,             // per player
   invulnerableMs: 1500,
   powerUps: {
     spawnEveryMs: 6000,      // a new pickup appears this often (if there is room)
@@ -36,6 +36,10 @@ window.COIN_DASH = {
     maxDrones: 10,
     enemyWarningMs: 1000     // a new drone is a harmless ghost for this long before it goes live
   },
+  players: [
+    { name: 'P1 (Arrows)', color: 0x71e8ce, css: '#71e8ce' },
+    { name: 'P2 (WASD)', color: 0x7aa2ff, css: '#7aa2ff' }
+  ],
 
   // --- polish tuning: polish owner adds keys below ---
   soundVolume: 0.15,
