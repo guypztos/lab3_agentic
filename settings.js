@@ -9,6 +9,8 @@ window.COIN_DASH = {
   colors: { background: 0x101c31, player: 0x71e8ce, coin: 0xffd166, drone: 0xff657a },
 
   // --- gameplay tuning: gameplay owner adds keys below ---
+  lives: 3,
+  invulnerableMs: 1500,
 
   // --- polish tuning: polish owner adds keys below ---
 };

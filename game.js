@@ -6,6 +6,8 @@ class CoinDash extends Phaser.Scene {
     const c = COIN_DASH;
     this.score = 0;
     this.finished = false;
+    this.lives = c.lives;
+    this.invulnerableUntil = 0;
     this.deadline = this.time.now + c.roundSeconds * 1000;
     this.physics.world.setBounds(0, 44, c.width, c.height - 44);
     this.add.grid(c.width / 2, c.height / 2, c.width, c.height, 40, 40,
@@ -32,14 +34,29 @@ class CoinDash extends Phaser.Scene {
       CoinDashFX.onCoin(this, this.coin.x, this.coin.y);
       this.placeCoin();
     });
-    this.physics.add.overlap(this.player, this.drones, () => {
-      CoinDashFX.onHit(this);
-      this.finish('A drone caught you!');
-    });
+    this.physics.add.overlap(this.player, this.drones, () => this.hitByDrone());
     CoinDashFX.onStart(this);
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys('W,A,S,D,R');
     this.input.keyboard.on('keydown-R', () => this.scene.restart());
+  }
+
+  isInvulnerable() { return this.time.now < this.invulnerableUntil; }
+
+  hitByDrone() {
+    if (this.finished || this.isInvulnerable()) return;
+    this.lives--;
+    CoinDashFX.onHit(this);
+    if (this.lives <= 0) {
+      this.drawHud(Math.max(0, Math.ceil((this.deadline - this.time.now) / 1000)));
+      return this.finish('A drone caught you!');
+    }
+    this.invulnerableUntil = this.time.now + COIN_DASH.invulnerableMs;
+  }
+
+  drawHud(seconds) {
+    const hearts = '♥'.repeat(this.lives) + '♡'.repeat(COIN_DASH.lives - this.lives);
+    this.hud.setText(`Coins: ${this.score}   Lives: ${hearts}   Time: ${seconds}s`);
   }
 
   placeCoin() {
@@ -63,7 +80,9 @@ class CoinDash extends Phaser.Scene {
     const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(COIN_DASH.playerSpeed);
     this.player.body.setVelocity(direction.x, direction.y);
     const seconds = Math.max(0, Math.ceil((this.deadline - this.time.now) / 1000));
-    this.hud.setText(`Coins: ${this.score}                       Time: ${seconds}s`);
+    // Blink while invulnerable so the player can see the grace period.
+    this.player.setAlpha(this.isInvulnerable() && Math.floor(this.time.now / 100) % 2 ? 0.3 : 1);
+    this.drawHud(seconds);
     if (seconds === 0) this.finish('Time is up!');
   }
 
