@@ -38,6 +38,7 @@ laptops' JSON files together and save the combined HTML. Use the same time windo
 - `style.css`: page appearance, including the game's background image.
 - `back_img.webp`: background landscape shown behind the game.
 - `settings.js`: round duration, speeds, colours and dimensions.
+- `menu.js`: main menu for choosing 1 or 2 players (both start the same game for now).
 - `game.js`: scene, input, collisions, score and end-of-round (gameplay).
 - `main.js`: Phaser game bootstrap.
 - `audio.js`: synthesised sound effects and background music, played through effects.js.
