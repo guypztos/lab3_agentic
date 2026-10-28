@@ -39,11 +39,12 @@ laptops' JSON files together and save the combined HTML. Use the same time windo
 - `settings.js`: round duration, speeds, colours and dimensions.
 - `game.js`: scene, input, collisions, score and end-of-round (gameplay).
 - `main.js`: Phaser game bootstrap.
+- `audio.js`: synthesised sound effects and background music, played through effects.js.
 - `effects.js`: sound/particle/shake hooks called by game.js (polish).
 - `storage.js`: high score persistence (polish).
 - `vendor/phaser-3.90.0.min.js`: the pinned Phaser runtime, byte for byte the file published at
   `https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js`; `vendor/LICENSE.phaser.txt` is its MIT licence.
 
-The game draws its own shapes; there are no image or audio assets. The authored files are under the
+The game draws its own shapes; there are no image or audio assets, and `audio.js` generates every sound at runtime. The authored files are under the
 MIT licence in LICENSE.txt. Phaser documentation:
 https://docs.phaser.io/phaser/getting-started/making-your-first-phaser-game

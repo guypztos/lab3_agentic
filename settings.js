@@ -27,4 +27,6 @@ window.COIN_DASH = {
   },
 
   // --- polish tuning: polish owner adds keys below ---
+  soundVolume: 0.15,
+  musicVolume: 0.06,
 };
