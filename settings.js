@@ -11,6 +11,20 @@ window.COIN_DASH = {
   // --- gameplay tuning: gameplay owner adds keys below ---
   lives: 3,
   invulnerableMs: 1500,
+  powerUps: {
+    spawnEveryMs: 6000,      // a new pickup appears this often (if there is room)
+    lifetimeMs: 8000,        // an uncollected pickup disappears after this
+    maxOnScreen: 2,
+    weights: { shield: 3, speed: 3, magnet: 3, predator: 1 },  // predator is the rare one
+    durations: { shield: 10000, speed: 6000, magnet: 8000, predator: 8000 },
+    speedMultiplier: 1.6,
+    magnetRange: 240,        // coins within this distance get pulled in
+    magnetPull: 280,
+    eatBonus: 5,             // coins gained per drone eaten
+    eatRespawnMs: 10000,     // an eaten drone is gone this long
+    colors: { shield: 0x4dabff, speed: 0xffa94d, magnet: 0xc77dff, predator: 0xff4fd8 },
+    labels: { shield: 'S', speed: '>', magnet: 'M', predator: 'E' }
+  },
 
   // --- polish tuning: polish owner adds keys below ---
 };
