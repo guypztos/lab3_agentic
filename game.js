@@ -1,4 +1,4 @@
-/* global Phaser, COIN_DASH, COIN_DASH_SPRITES */
+/* global Phaser, COIN_DASH, COIN_DASH_SPRITES, CoinDashFX */
 class CoinDash extends Phaser.Scene {
   constructor() { super('CoinDash'); }
 
@@ -34,9 +34,10 @@ class CoinDash extends Phaser.Scene {
     this.placeCoin();
     this.drones = this.physics.add.group();
     for (let i = 0; i < c.droneCount; i++) {
-      const drone = this.add.rectangle(90 + i * 270, 100, 26, 26, c.colors.drone);
-      this.drones.add(drone);
-      drone.body.setCollideWorldBounds(true).setBounce(1, 1);
+      const drone = this.drones.create(90 + i * 270, 100, 'enemy_walk')
+        .setDisplaySize(c.enemySize, c.enemySize);
+      // Hitbox is the round body in the 128px frame; horns and feet don't count.
+      drone.body.setCircle(34, 30, 43).setCollideWorldBounds(true).setBounce(1, 1);
       const angle = (35 + i * 105) * Math.PI / 180;
       drone.body.setVelocity(Math.cos(angle) * c.droneSpeed, Math.sin(angle) * c.droneSpeed);
     }
@@ -48,9 +49,10 @@ class CoinDash extends Phaser.Scene {
       CoinDashFX.onCoin(this, this.coin.x, this.coin.y);
       this.placeCoin();
     });
-    this.physics.add.overlap(this.player, this.drones, () => {
+    this.physics.add.overlap(this.player, this.drones, (player, drone) => {
       // Touching two drones at once calls this twice; only the first hit counts.
       if (this.finished) return;
+      drone.setTexture('enemy_hit');
       CoinDashFX.onHit(this);
       this.finish('A drone caught you!');
     });
@@ -85,6 +87,7 @@ class CoinDash extends Phaser.Scene {
     const direction = new Phaser.Math.Vector2(dx, dy).normalize().scale(COIN_DASH.playerSpeed);
     this.player.body.setVelocity(direction.x, direction.y);
     this.animatePlayer(dx);
+    for (const drone of this.drones.getChildren()) drone.setFlipX(drone.body.velocity.x < 0);
     const seconds = Math.max(0, Math.ceil((this.deadline - this.time.now) / 1000));
     this.hud.setText(`Score: ${this.score}                       Time: ${seconds}s`);
     if (seconds === 0) this.finish('Time is up!');

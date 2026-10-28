@@ -11,6 +11,7 @@ window.COIN_DASH = {
   // --- gameplay tuning: gameplay owner adds keys below ---
   playerSize: 48,
   foodSize: 34,
+  enemySize: 46,
   // Collectibles: points per pickup and how often each one spawns (relative weight).
   foods: [
     { key: 'food_apple', points: 10, weight: 60 },
