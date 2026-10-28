@@ -27,12 +27,12 @@ class CoinDash extends Phaser.Scene {
     this.placeCoin();
     this.drones = this.physics.add.group();
     for (let i = 0; i < c.droneCount; i++) {
-      const drone = this.add.rectangle(90 + i * 270, 100, 26, 26, c.colors.drone);
-      this.drones.add(drone);
-      drone.body.setCollideWorldBounds(true).setBounce(1, 1);
-      const angle = (35 + i * 105) * Math.PI / 180;
-      drone.body.setVelocity(Math.cos(angle) * c.droneSpeed, Math.sin(angle) * c.droneSpeed);
+      this.addDrone(90 + i * 270, 100, (35 + i * 105) * Math.PI / 180, 0);
     }
+    this.extraCoins = this.physics.add.group();
+    this.physics.add.overlap(this.player, this.extraCoins, (player, coin) => this.collectExtraCoin(coin));
+    this.scheduleCoinSpawn();
+    this.scheduleEnemySpawn();
     this.physics.add.overlap(this.player, this.coin, () => {
       if (this.finished) return;
       this.score++;
@@ -52,6 +52,76 @@ class CoinDash extends Phaser.Scene {
   }
 
   isInvulnerable() { return this.time.now < this.invulnerableUntil; }
+
+  roundProgress() {
+    const total = COIN_DASH.roundSeconds * 1000;
+    return Phaser.Math.Clamp(1 - (this.deadline - this.time.now) / total, 0, 1);
+  }
+
+  // Delay between spawns, shrinking from startMs to endMs as the round progresses.
+  rampDelay(startMs, endMs) { return Phaser.Math.Linear(startMs, endMs, this.roundProgress()); }
+
+  randomSpotAwayFromPlayer(minDistance) {
+    const c = COIN_DASH;
+    let x, y;
+    do {
+      x = Phaser.Math.Between(25, c.width - 25);
+      y = Phaser.Math.Between(70, c.height - 25);
+    } while (Phaser.Math.Distance.Between(x, y, this.player.x, this.player.y) < minDistance);
+    return { x, y };
+  }
+
+  addDrone(x, y, angle, warningMs) {
+    const c = COIN_DASH;
+    const drone = this.add.rectangle(x, y, 26, 26, c.colors.drone);
+    this.drones.add(drone);
+    drone.body.setCollideWorldBounds(true).setBounce(1, 1);
+    const launch = () => drone.body.setVelocity(Math.cos(angle) * c.droneSpeed, Math.sin(angle) * c.droneSpeed);
+    if (!warningMs) return launch();
+    // Spawn as a see-through ghost that cannot hurt anyone, then go live.
+    drone.setAlpha(0.35);
+    drone.body.enable = false;
+    this.time.delayedCall(warningMs, () => {
+      drone.setAlpha(1);
+      drone.body.enable = true;
+      drone.body.reset(x, y);
+      launch();
+    });
+  }
+
+  scheduleEnemySpawn() {
+    const e = COIN_DASH.escalation;
+    this.time.delayedCall(this.rampDelay(e.enemySpawnStartMs, e.enemySpawnEndMs), () => {
+      if (this.finished) return;
+      if (this.drones.getLength() < e.maxDrones) {
+        const { x, y } = this.randomSpotAwayFromPlayer(180);
+        this.addDrone(x, y, Phaser.Math.FloatBetween(0, Math.PI * 2), e.enemyWarningMs);
+      }
+      this.scheduleEnemySpawn();
+    });
+  }
+
+  scheduleCoinSpawn() {
+    const e = COIN_DASH.escalation;
+    this.time.delayedCall(this.rampDelay(e.coinSpawnStartMs, e.coinSpawnEndMs), () => {
+      if (this.finished) return;
+      if (this.extraCoins.countActive() < e.maxExtraCoins) {
+        const { x, y } = this.randomSpotAwayFromPlayer(60);
+        const coin = this.add.circle(x, y, 9, COIN_DASH.colors.coin);
+        this.extraCoins.add(coin);
+        coin.body.setCircle(9);
+        coin.expires = this.time.now + e.coinLifetimeMs;
+      }
+      this.scheduleCoinSpawn();
+    });
+  }
+
+  collectExtraCoin(coin) {
+    if (this.finished || !coin.active) return;
+    this.score++;
+    CoinDashFX.onCoin(this, coin.x, coin.y);
+    coin.destroy();
+  }
 
   togglePause() {
     if (this.finished) return;
@@ -79,6 +149,7 @@ class CoinDash extends Phaser.Scene {
     if (this.invulnerableUntil) this.invulnerableUntil += gap;
     Object.keys(this.effects).forEach(t => { if (this.effects[t]) this.effects[t] += gap; });
     this.pickups.getChildren().forEach(pickup => { pickup.expires += gap; });
+    this.extraCoins.getChildren().forEach(coin => { coin.expires += gap; });
     this.paused = false;
     this.time.paused = false;
     this.physics.resume();
@@ -172,15 +243,23 @@ class CoinDash extends Phaser.Scene {
       pickup.setAlpha(alpha);
       pickup.label.setAlpha(alpha);
     });
-    // Magnet: pull the coin toward the player when it is close enough.
-    const gap = Phaser.Math.Distance.Between(this.coin.x, this.coin.y, this.player.x, this.player.y);
-    if (this.isActive('magnet') && gap < p.magnetRange) {
-      const pull = new Phaser.Math.Vector2(this.player.x - this.coin.x, this.player.y - this.coin.y)
-        .normalize().scale(p.magnetPull);
-      this.coin.body.setVelocity(pull.x, pull.y);
-    } else {
-      this.coin.body.setVelocity(0, 0);
-    }
+    // Extra coins vanish after a while, blinking first.
+    this.extraCoins.getChildren().slice().forEach(coin => {
+      const left = coin.expires - now;
+      if (left <= 0) return coin.destroy();
+      coin.setAlpha(left < 1500 && Math.floor(now / 150) % 2 ? 0.35 : 1);
+    });
+    // Magnet: pull every coin toward the player when it is close enough.
+    [this.coin, ...this.extraCoins.getChildren()].forEach(coin => {
+      const gap = Phaser.Math.Distance.Between(coin.x, coin.y, this.player.x, this.player.y);
+      if (this.isActive('magnet') && gap < p.magnetRange) {
+        const pull = new Phaser.Math.Vector2(this.player.x - coin.x, this.player.y - coin.y)
+          .normalize().scale(p.magnetPull);
+        coin.body.setVelocity(pull.x, pull.y);
+      } else {
+        coin.body.setVelocity(0, 0);
+      }
+    });
     // Outline the player in the colour of the strongest active effect; list effects in the HUD.
     const names = ['predator', 'shield', 'speed', 'magnet'].filter(t => this.isActive(t));
     const colour = names.length ? p.colors[names[0]] : null;

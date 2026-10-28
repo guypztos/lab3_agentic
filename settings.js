@@ -21,9 +21,20 @@ window.COIN_DASH = {
     magnetRange: 240,        // coins within this distance get pulled in
     magnetPull: 280,
     eatBonus: 5,             // coins gained per drone eaten
-    eatRespawnMs: 10000,     // an eaten drone is gone this long
+    eatRespawnMs: 5000,      // an eaten drone is gone this long
     colors: { shield: 0x4dabff, speed: 0xffa94d, magnet: 0xc77dff, predator: 0xff4fd8 },
     labels: { shield: 'S', speed: '>', magnet: 'M', predator: 'E' }
+  },
+  // Difficulty ramps up linearly over the round: the delays shrink from Start to End.
+  escalation: {
+    coinSpawnStartMs: 6000,  // extra coins appear this often at the start...
+    coinSpawnEndMs: 1200,    // ...and this often at the very end
+    maxExtraCoins: 6,
+    coinLifetimeMs: 7000,
+    enemySpawnStartMs: 12000,  // a new drone appears this often at the start...
+    enemySpawnEndMs: 3000,     // ...and this often at the very end
+    maxDrones: 10,
+    enemyWarningMs: 1000     // a new drone is a harmless ghost for this long before it goes live
   },
 
   // --- polish tuning: polish owner adds keys below ---
